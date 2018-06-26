@@ -15,7 +15,7 @@ class App(QWidget):
     def __init__(self):
         #here we initialize the basic parameters for the gui
         super().__init__()
-        self.prev_text = ""
+        self.prev_text = "                           "
         self.title = 'HTML Highlighter'
         self.col_codes = {}
         self.left = 10
@@ -82,7 +82,6 @@ colour code in the two text boxes below")
     def on_click(self):
         print('Looking for file')
         location = self.openFileNameDialog()
-        print(location)
         #do stuff
 
     def openFileNameDialog(self):
@@ -91,6 +90,11 @@ colour code in the two text boxes below")
         fileName, _ = QFileDialog.getOpenFileName(self,"QFileDialog.getOpenFileName()", "","All Files (*);;Python Files (*.py)", options=options)
         if fileName:
             print(fileName)
+
+            self.cur_file = fileName
+            self.selected_file.setText("The selected file is: " + self.cur_file)
+            self.selected_file.adjustSize()
+
             return fileName
         else:
             return "Error"
@@ -124,6 +128,7 @@ class ListElement(QPushButton):
         self.setAutoFillBackground(True)
         self.move(pos[0], pos[1])
         self.setStyleSheet("border:0px solid rgb(0, 0, 0);")
+        self.clicked.connect(self.click)
 
     def enterEvent(self, QEvent):
         self.setStyleSheet("color: rgb(255, 255, 255); background-color: rgb(0,0,0); border:0px solid rgb(0, 0, 0);")
@@ -131,11 +136,13 @@ class ListElement(QPushButton):
     def leaveEvent(self, QEvent):
         self.setStyleSheet("color: rgb(0,0,0); background-color: rgb(255,255,255); border:0px solid rgb(0, 0, 0);")
 
-    def mousePressEvent(self, event):
-        self.parent.parent.cur_file = self.text()
+    @pyqtSlot()
+    def click(self):
+        print(self.parent.parent.cur_file)
+        self.parent.parent.cur_file = self.parent.parent.base_dir + "/" + self.text()
         self.parent.parent.selected_file.setText("The selected file is: " + self.parent.parent.cur_file)
         print("The selected file is: " + self.parent.parent.cur_file)
-        self.show()
+        self.parent.parent.selected_file.adjustSize()
 
 def main():
     app = QApplication(sys.argv)
