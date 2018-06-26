@@ -124,7 +124,7 @@ setup(
     # https://packaging.python.org/en/latest/requirements.html
 
     install_requires=[  # Optional
-        'pygame'
+        'PyQt5'
     ],
 
     # List additional groups of dependencies here (e.g. development
