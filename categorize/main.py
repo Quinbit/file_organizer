@@ -51,30 +51,9 @@ class App(QWidget):
         self.selected_file.setText("The selected file is: " + self.cur_file)
         self.selected_file.move(500, 100)
 
-
-        '''
-
-        #This label will give the user the intructions needed
-        instr = QLabel(self)
-        instr.setText("To manually predefine a highlight color, type in the tag \nand the desired \
-colour code in the two text boxes below")
-        instr.move(150, 350)
-
-        #This label will list all of the label colours that the user has specified
-
-        res = QLabel(self)
-        res.setText("")
-        res.move(130, 600)
-        res.resize(300, 200)
-
-        self.res = res
-
-        #Where the user will enter in the tag
-        self.textbox = QLineEdit(self)
-        self.textbox.setText("Type in html tag without brackettes")
-        self.textbox.move(160, 450)
-        self.textbox.resize(280,40)
-        '''
+        l = QLabel(self)
+        l.setText("Files/Directories")
+        l.move(100,100)
 
         self.show()
 
@@ -110,7 +89,6 @@ class CustomLabel(QLabel):
         self.elem = []
 
         for i in range(len(files)):
-
             self.elem.append(ListElement(files[i], self, (30, 30+30*i)))
 
     def dragEnterEvent(self, e):
@@ -120,6 +98,16 @@ class CustomLabel(QLabel):
     def dropEvent(self, e):
         #e.mimeData().text()
         location = e.mimeData().text()
+
+    def update_dir(self):
+        files = os.listdir(os.getcwd())
+        print(files)
+        for i in range(len(self.elem)):
+            self.elem[0].deleteLater()
+        del self.elem[:]
+
+        for i in range(len(files)):
+            self.elem.append(ListElement(files[i], self, (30, 30+30*i)))
 
 class ListElement(QPushButton):
     def __init__(self, title, parent, pos):
@@ -139,10 +127,16 @@ class ListElement(QPushButton):
     @pyqtSlot()
     def click(self):
         print(self.parent.parent.cur_file)
-        self.parent.parent.cur_file = self.parent.parent.base_dir + "/" + self.text()
-        self.parent.parent.selected_file.setText("The selected file is: " + self.parent.parent.cur_file)
-        print("The selected file is: " + self.parent.parent.cur_file)
-        self.parent.parent.selected_file.adjustSize()
+
+        if not os.path.isdir(self.parent.parent.base_dir + "/" + self.text()):
+            self.parent.parent.cur_file = self.parent.parent.base_dir + "/" + self.text()
+            self.parent.parent.selected_file.setText("The selected file is: " + self.parent.parent.cur_file)
+            print("The selected file is: " + self.parent.parent.cur_file)
+            self.parent.parent.selected_file.adjustSize()
+        else:
+            os.chdir(self.parent.parent.base_dir + "/" + self.text())
+            self.parent.parent.base_dir = self.parent.parent.base_dir + "/" + self.text()
+            self.parent.update_dir()
 
 def main():
     app = QApplication(sys.argv)
