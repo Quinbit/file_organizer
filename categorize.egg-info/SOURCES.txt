@@ -1,0 +1,10 @@
+README.md
+setup.py
+categorize/__init__.py
+categorize/main.py
+categorize.egg-info/PKG-INFO
+categorize.egg-info/SOURCES.txt
+categorize.egg-info/dependency_links.txt
+categorize.egg-info/entry_points.txt
+categorize.egg-info/requires.txt
+categorize.egg-info/top_level.txt
