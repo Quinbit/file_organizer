@@ -15,14 +15,15 @@ class App(QWidget):
     def __init__(self):
         #here we initialize the basic parameters for the gui
         super().__init__()
-        self.prev_text = "                           "
-        self.title = 'HTML Highlighter'
+        self.prev_text = ""
+        self.title = 'Categorizer'
         self.col_codes = {}
         self.left = 10
         self.top = 10
         self.width = 1200
         self.height = 800
         self.base_dir = os.getcwd()
+        self.title_font = QtGui.QFont("Times", 20, QtGui.QFont.Bold)
 
         self.initUI()
 
@@ -82,11 +83,15 @@ class CustomLabel(QLabel):
     def __init__(self, title, parent):
         super().__init__(title, parent)
         self.parent = parent
+        self.max_length = 15
         self.setAcceptDrops(True)
         self.setGeometry(20, 20, 300, 500)
         self.setStyleSheet("border:1px solid rgb(0, 0, 0);")
         files = os.listdir(os.getcwd())
         self.elem = []
+
+        if len(files) < self.max_length:
+            files += [""]*(self.max_length-len(files))
 
         for i in range(len(files)):
             self.elem.append(ListElement(files[i], self, (30, 30+30*i)))
@@ -101,13 +106,13 @@ class CustomLabel(QLabel):
 
     def update_dir(self):
         files = os.listdir(os.getcwd())
-        print(files)
-        for i in range(len(self.elem)):
-            self.elem[0].deleteLater()
-        del self.elem[:]
 
-        for i in range(len(files)):
-            self.elem.append(ListElement(files[i], self, (30, 30+30*i)))
+        if len(files) < self.max_length:
+            files += [""]*(self.max_length-len(files))
+
+        for i in range(len(self.elem)):
+            self.elem[i].setText(files[i])
+            self.elem[i].adjustSize()
 
 class ListElement(QPushButton):
     def __init__(self, title, parent, pos):
@@ -119,10 +124,12 @@ class ListElement(QPushButton):
         self.clicked.connect(self.click)
 
     def enterEvent(self, QEvent):
-        self.setStyleSheet("color: rgb(255, 255, 255); background-color: rgb(0,0,0); border:0px solid rgb(0, 0, 0);")
+        if self.text() != "":
+            self.setStyleSheet("color: rgb(255, 255, 255); background-color: rgb(0,0,0); border:0px solid rgb(0, 0, 0);")
 
     def leaveEvent(self, QEvent):
-        self.setStyleSheet("color: rgb(0,0,0); background-color: rgb(255,255,255); border:0px solid rgb(0, 0, 0);")
+        if self.text() != "":
+            self.setStyleSheet("color: rgb(0,0,0); background-color: rgb(255,255,255); border:0px solid rgb(0, 0, 0);")
 
     @pyqtSlot()
     def click(self):
