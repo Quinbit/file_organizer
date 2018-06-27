@@ -3,7 +3,7 @@ from PyQt5.QtWidgets import QApplication, QWidget, QPushButton
 from PyQt5.QtGui import QIcon
 from PyQt5 import QtGui
 from PyQt5.QtCore import pyqtSlot
-from PyQt5.QtWidgets import QInputDialog, QFileDialog, QLineEdit, QLabel
+from PyQt5.QtWidgets import QInputDialog, QFileDialog, QLineEdit, QLabel, QComboBox
 from PyQt5.QtGui import QIcon
 import os
 from functools import reduce
@@ -70,7 +70,12 @@ class App(QWidget):
         self.directory_label.move(500, 40)
 
         self.change_dir = QPushButton("Change Directory", self)
-        self.setToolTip("Click to change root directory")
+        self.change_dir.setToolTip("Click to change root directory")
+        self.change_dir.move(900 + len(self.directory_label.text()), 40)
+        self.change_dir.clicked.connect(self.change_dir_function)
+
+        self.combo = QComboBox(self)
+        self.combo.move(500, 300)
 
         l = QLabel(self)
         l.setText("Files/Directories")
@@ -107,9 +112,45 @@ class App(QWidget):
             self.base_dir = os.getcwd()
             self.directory_label.setText("Root Directory: " + self.base_dir)
             self.directory_label.adjustSize()
+            self.drag_object.update_dir()
+            self.change_dir.move(900 + len(self.directory_label.text()), 40)
+        self.update_combo_box()
 
     def buildDirPopup(self):
         self.dirPopup = DirectoryPopup(self)
+
+    def change_dir_function(self):
+        fileName = str(QFileDialog.getExistingDirectory(self,"QFileDialog.getOpenFileName()"))
+
+        if fileName:
+            print(fileName)
+
+            if os.path.isdir(fileName):
+                os.chdir(fileName)
+                self.getBaseDir()
+
+    def update_combo_box(self):
+        self.combo.clear()
+        if self.base_dir != "":
+            files = self.return_directories(self.base_dir, "")
+            print(files)
+            self.combo.addItems(files)
+            self.adjustSize()
+
+    def return_directories(self, dir, prefix):
+        files = parse_for_hidden(os.listdir(dir))
+        deleted = 0
+
+        for i in range(len(files)):
+            if os.path.isdir(dir+"/"+files[i-deleted]):
+                files += self.return_directories(dir+"/"+files[i-deleted], files[i-deleted])
+                files[i - deleted] = prefix + "/" + files[i - deleted]
+            else:
+                del files[i - deleted]
+                deleted += 1
+
+        return files
+
 
 class CustomLabel(QLabel):
     def __init__(self, title, parent):
