@@ -82,11 +82,12 @@ class App(QWidget):
         self.combo_hint.setText("Folders")
         self.combo_hint.move(500, 170)
 
+        self.added_folders = AddedFiles("", self)
+
         self.add_folder = QPushButton("Add-->", self)
         self.add_folder.setToolTip("Press to add the folder to the collection of folders")
         self.add_folder.move(650, 200)
-
-        self.added_folders = AddedFiles("", self)
+        self.add_folder.clicked.connect(self.add_folder_func)
 
         l = QLabel(self)
         l.setText("Files/Directories")
@@ -96,8 +97,8 @@ class App(QWidget):
         self.getBaseDir()
 
     @pyqtSlot()
-    def add_folder(self):
-        pass
+    def add_folder_func(self):
+        self.added_folders.add_element(self.combo.currentText())
 
     @pyqtSlot()
     def on_click(self):
@@ -314,19 +315,96 @@ class AddedFiles(QLabel):
     def __init__(self, title, parent):
         super().__init__(title, parent)
         self.parent = parent
-        self.max_length = 15
-        self.width = 200
+        self.max_length = 20
+        self.width = 300
         self.height = 600
         self.top = 200
         self.left = 800
+        self.elem = []
+        self.removes = []
+        self.active = [False]*self.max_length
         self.setGeometry(self.left, self.top, self.width, self.height)
-        self.setStyleSheet("border:1px solid rgb(0, 0, 0);")
+        self.setStyleSheet("border:0px solid rgb(0, 0, 0);")
+        self.initialize_elements()
+        self.e = None
 
     def initialize_elements(self):
-        pass
+        for i in range(self.max_length):
+            self.elem.append(QLabel("", self))
+            self.elem[i].move(0, i*30)
+            self.elem[i].setStyleSheet("border:0px solid rgb(0, 0, 0);")
 
-    def add_element(self):
-        pass
+        for i in range(self.max_length):
+            self.removes.append(RemoveButton("X", self, i))
+
+    def add_element(self, text):
+        all_elements = []
+        for i in range(self.max_length):
+            all_elements.append(self.elem[i].text())
+
+        if text in all_elements:
+            self.e = ErrorBox(self, "Already Added")
+            return
+
+        for i in range(self.max_length):
+            if self.elem[i].text() == "":
+                self.elem[i].setText(text)
+                self.elem[i].adjustSize()
+                break
+            elif i == (self.max_length-1):
+                self.e = ErrorBox(self, "We can't add the file\n to any more directories")
+
+    def remove_elem(self, index):
+        self.elem[index].setText("")
+        for i in range(index, self.max_length-1):
+            self.elem[i].setText(self.elem[i+1].text())
+
+        self.elem[-1].setText("")
+
+class RemoveButton(QPushButton):
+    def __init__(self, title, parent, index):
+        super().__init__(title, parent)
+        self.parent = parent
+        self.index = index
+        self.move(290, index*30)
+        self.clicked.connect(self.remove)
+
+    def remove(self):
+        self.parent.remove_elem(self.index)
+
+class ErrorBox(QWidget):
+    def __init__(self, parent, message):
+        super().__init__()
+        self.title = 'Error'
+        self.left = 400
+        self.top = 400
+        self.width = 50 + 6*max(map(lambda x: len(x), message.split('\n')))
+        self.height = 200 + 20*len(message.split('\n'))
+        self.parent = parent
+        self.msg = message
+
+        self.initUI()
+
+        self.show()
+
+    def initUI(self):
+        self.setWindowTitle(self.title)
+        self.setGeometry(self.left, self.top, self.width, self.height)
+
+        #set into label
+        self.intro = QLabel(self)
+        self.intro.setText(self.msg)
+        self.intro.move(self.width//10,self.height//(4))
+
+        self.confirm = QPushButton("Confirm", self)
+        self.confirm.setToolTip("Click to close error")
+        self.confirm.move(self.width//(3.5), self.height//(4/3))
+        self.confirm.clicked.connect(self.close_func)
+
+    def close_func(self, event):
+        self.parent.e = None
+        self.close()
+        #pass
 
 def main():
     app = QApplication(sys.argv)
