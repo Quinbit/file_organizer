@@ -79,7 +79,7 @@ class App(QWidget):
         self.combo.setToolTip("Choose which folder to add the designated file to")
 
         self.combo_hint = QLabel(self)
-        self.combo_hint.setText("Folders")
+        self.combo_hint.setText("Accessible Folders")
         self.combo_hint.move(500, 170)
 
         self.added_folders = AddedFiles("", self)
@@ -89,12 +89,46 @@ class App(QWidget):
         self.add_folder.move(650, 200)
         self.add_folder.clicked.connect(self.add_folder_func)
 
+        self.added_folders_label = QLabel(self)
+        self.added_folders_label.setText("Folders to add file to")
+        self.added_folders_label.move(800, 170)
+
+        self.add_simlinks = QPushButton("Add Simlinks", self)
+        self.add_simlinks.setToolTip("Press to add the file to the given directories")
+        self.add_simlinks.move(500, 700)
+        self.add_simlinks.clicked.connect(self.add_simlinks_function)
+
         l = QLabel(self)
         l.setText("Files/Directories")
         l.move(100,100)
 
         self.show()
         self.getBaseDir()
+
+    def add_simlinks_function(self):
+        if self.cur_file == "":
+            QMessageBox.question(self, "Error",'No file selected', QMessageBox.Ok, QMessageBox.Ok)
+            return
+
+        folders = []
+        for i in range(len(self.added_folders.elem)):
+            if self.added_folders.elem[i].text() != '':
+                folders.append(self.added_folders.elem[i].text())
+
+        file = self.cur_file
+        file_base = file.split("/")[-1]
+
+        os.system("mv " + file + " " + self.base_dir + "/.hidden")
+
+        for folder in folders:
+            print("ln -s " + self.base_dir + "/.hidden/" + file_base + " " + self.base_dir + folder)
+            os.system("ln -s " + self.base_dir + "/.hidden/" + file_base + " " + self.base_dir + folder)
+
+        QMessageBox.question(self, "Completed",'The file has been successfully linked. You can find the original file in the hidden folder ' + self.base_dir + "/.hidden", QMessageBox.Ok, QMessageBox.Ok)
+
+        self.drag_object.update_dir()
+        self.update_combo_box()
+        self.cur_file = ""
 
     @pyqtSlot()
     def add_folder_func(self):
