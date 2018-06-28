@@ -3,12 +3,12 @@ from PyQt5.QtWidgets import QApplication, QWidget, QPushButton
 from PyQt5.QtGui import QIcon
 from PyQt5 import QtGui
 from PyQt5.QtCore import pyqtSlot
-from PyQt5.QtWidgets import QInputDialog, QFileDialog, QLineEdit, QLabel, QComboBox
+from PyQt5.QtWidgets import QInputDialog, QFileDialog, QLineEdit, QLabel, QComboBox, QMessageBox
 from PyQt5.QtGui import QIcon
 import os
 from functools import reduce
 from PyQt5.QtCore import pyqtSlot
-from PyQt5.QtWidgets import QMainWindow, QApplication, QPushButton, QWidget, QAction, QTabWidget,QVBoxLayout, QMessageBox
+from PyQt5.QtWidgets import QMainWindow, QApplication, QPushButton, QWidget, QAction, QTabWidget,QVBoxLayout
 from random import random
 
 def parse_for_hidden(files):
@@ -191,6 +191,13 @@ class CustomLabel(QLabel):
         self.back.move(0,0)
         self.back.clicked.connect(self.back_function)
 
+        self.add_dir = QPushButton("Add Folder", self)
+        self.add_dir.setToolTip('Clock to add a new directory in the shown folder')
+        self.add_dir.move(236, 0)
+        self.add_dir.clicked.connect(self.create_directory)
+
+        self.new_directory = None
+
     @pyqtSlot()
     def back_function(self):
         os.chdir("..")
@@ -217,6 +224,9 @@ class CustomLabel(QLabel):
         for i in range(len(self.elem)):
             self.elem[i].setText(files[i])
             self.elem[i].adjustSize()
+
+    def create_directory(self):
+        self.new_directory = CreateDirectoryPopup(self)
 
 class ListElement(QPushButton):
     def __init__(self, title, parent, pos):
@@ -326,7 +336,6 @@ class AddedFiles(QLabel):
         self.setGeometry(self.left, self.top, self.width, self.height)
         self.setStyleSheet("border:0px solid rgb(0, 0, 0);")
         self.initialize_elements()
-        self.e = None
 
     def initialize_elements(self):
         for i in range(self.max_length):
@@ -337,22 +346,25 @@ class AddedFiles(QLabel):
         for i in range(self.max_length):
             self.removes.append(RemoveButton("X", self, i))
 
+        self.update_removes()
+
     def add_element(self, text):
         all_elements = []
         for i in range(self.max_length):
             all_elements.append(self.elem[i].text())
 
         if text in all_elements:
-            self.e = ErrorBox(self, "Already Added")
+            QMessageBox.question(self, "Error",'This folder has already been added', QMessageBox.Ok, QMessageBox.Ok)
             return
 
         for i in range(self.max_length):
             if self.elem[i].text() == "":
                 self.elem[i].setText(text)
                 self.elem[i].adjustSize()
+                self.update_removes()
                 break
             elif i == (self.max_length-1):
-                self.e = ErrorBox(self, "We can't add the file\n to any more directories")
+                QMessageBox.question(self, "Error", "We can't add the file to any more directories", QMessageBox.Ok, QMessageBox.Ok)
 
     def remove_elem(self, index):
         self.elem[index].setText("")
@@ -360,6 +372,18 @@ class AddedFiles(QLabel):
             self.elem[i].setText(self.elem[i+1].text())
 
         self.elem[-1].setText("")
+        self.update_removes()
+
+    def update_removes(self):
+        for i in range(self.max_length):
+            if self.elem[i].text() == "":
+                self.removes[i].setText("")
+                self.removes[i].setStyleSheet("border:0px solid rgb(0, 0, 0);")
+                self.removes[i].adjustSize()
+            else:
+                self.removes[i].setText("X")
+                self.removes[i].setStyleSheet("border:1px solid rgb(0, 0, 0);")
+                self.removes[i].adjustSize()
 
 class RemoveButton(QPushButton):
     def __init__(self, title, parent, index):
@@ -372,16 +396,15 @@ class RemoveButton(QPushButton):
     def remove(self):
         self.parent.remove_elem(self.index)
 
-class ErrorBox(QWidget):
-    def __init__(self, parent, message):
+class CreateDirectoryPopup(QWidget):
+    def __init__(self, parent):
         super().__init__()
-        self.title = 'Error'
+        self.title = 'Create New Folder'
         self.left = 400
         self.top = 400
-        self.width = 50 + 6*max(map(lambda x: len(x), message.split('\n')))
-        self.height = 200 + 20*len(message.split('\n'))
+        self.width = 400
+        self.height = 200
         self.parent = parent
-        self.msg = message
 
         self.initUI()
 
@@ -393,18 +416,26 @@ class ErrorBox(QWidget):
 
         #set into label
         self.intro = QLabel(self)
-        self.intro.setText(self.msg)
-        self.intro.move(self.width//10,self.height//(4))
+        self.intro.setText("Type in name of new folder")
+        self.intro.move(20, 20)
+
+        self.textbox = QLineEdit(self)
+        self.textbox.move(20, 50)
+        self.textbox.resize(280,40)
 
         self.confirm = QPushButton("Confirm", self)
-        self.confirm.setToolTip("Click to close error")
-        self.confirm.move(self.width//(3.5), self.height//(4/3))
-        self.confirm.clicked.connect(self.close_func)
+        self.confirm.setToolTip("Click to confirm new folder name")
+        self.confirm.move(170, 150)
+        self.confirm.clicked.connect(self.confirm_function)
 
-    def close_func(self, event):
-        self.parent.e = None
-        self.close()
-        #pass
+    def confirm_function(self):
+        text = self.textbox.text()
+
+        os.system("mkdir " + self.parent.parent.cur_dir + "/" + text)
+
+        self.parent.parent.update_combo_box()
+        self.parent.update_dir()
+        selc.close()
 
 def main():
     app = QApplication(sys.argv)
