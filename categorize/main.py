@@ -75,7 +75,18 @@ class App(QWidget):
         self.change_dir.clicked.connect(self.change_dir_function)
 
         self.combo = QComboBox(self)
-        self.combo.move(500, 300)
+        self.combo.move(500, 200)
+        self.combo.setToolTip("Choose which folder to add the designated file to")
+
+        self.combo_hint = QLabel(self)
+        self.combo_hint.setText("Folders")
+        self.combo_hint.move(500, 170)
+
+        self.add_folder = QPushButton("Add-->", self)
+        self.add_folder.setToolTip("Press to add the folder to the collection of folders")
+        self.add_folder.move(650, 200)
+
+        self.added_folders = AddedFiles("", self)
 
         l = QLabel(self)
         l.setText("Files/Directories")
@@ -83,6 +94,10 @@ class App(QWidget):
 
         self.show()
         self.getBaseDir()
+
+    @pyqtSlot()
+    def add_folder(self):
+        pass
 
     @pyqtSlot()
     def on_click(self):
@@ -279,6 +294,7 @@ class DirectoryPopup(QWidget):
         self.parent.drag_object.update_dir()
         self.parent.directory_label.setText("Root Directory: " + self.parent.base_dir)
         self.parent.directory_label.adjustSize()
+        self.parent.update_combo_box()
         if not os.path.isdir(self.directory + "/.hidden"):
             os.system("mkdir " + self.directory + "/.hidden")
         self.close()
@@ -293,6 +309,24 @@ class DirectoryPopup(QWidget):
                 self.directory = fileName
                 self.chosen_dir.setText("Selected Directory: " + self.directory)
                 self.chosen_dir.adjustSize()
+
+class AddedFiles(QLabel):
+    def __init__(self, title, parent):
+        super().__init__(title, parent)
+        self.parent = parent
+        self.max_length = 15
+        self.width = 200
+        self.height = 600
+        self.top = 200
+        self.left = 800
+        self.setGeometry(self.left, self.top, self.width, self.height)
+        self.setStyleSheet("border:1px solid rgb(0, 0, 0);")
+
+    def initialize_elements(self):
+        pass
+
+    def add_element(self):
+        pass
 
 def main():
     app = QApplication(sys.argv)
